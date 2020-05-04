@@ -7,6 +7,12 @@
 char date[6]; // данные часов
 unsigned int delayTime = 0;
 const unsigned int registerArray[] = { 0x00, 0x02, 0x04, 0x07, 0x08, 0x09 };
+struct VIDEO
+{
+	unsigned char symb;
+	unsigned char attr;
+};
+VIDEO  far* screen = (VIDEO far*)MK_FP(0xB800, 0);
  
 void interrupt newTime(...);  // новый обработчик прерываний часов
 void interrupt newAlarm(...); // новый обработчик прерываний будильника
@@ -247,10 +253,16 @@ void interrupt newTime(...) // новый обработчик прерыван�
     outp(0x20, 0x20);
     outp(0xA0, 0x20);
 }
- 
+
 void interrupt newAlarm(...) // новый обработчик прерываний будильника
 {
-    puts("ALARM! ALARM! ALARM!");
+    const char[8] ALARM = "ALARM!!!";
+    for (int i = 0; i < 8; i++, screen++)
+    {
+        screen->symb = ALARM[i];
+        screen->attr = 0x5Eh;
+    }
+    
     lastAlarm();
     resetAlarm();
 }
