@@ -7,12 +7,7 @@
 char date[6]; // данные часов
 unsigned int delayTime = 0;
 const unsigned int registerArray[] = { 0x00, 0x02, 0x04, 0x07, 0x08, 0x09 };
-struct VIDEO
-{
-	unsigned char symb;
-	unsigned char attr;
-};
-VIDEO  far* screen = (VIDEO far*)MK_FP(0xB800, 0);
+
  
 void interrupt newTime(...);  // новый обработчик прерываний часов
 void interrupt newAlarm(...); // новый обработчик прерываний будильника
@@ -203,15 +198,15 @@ void resetAlarm()
         outp(0x70, 0xA);
     } while (inp(0x71) & 0x80); // Если 7й бит установлен в 0, то это значит, что данные готовы для чтения
  
-    outp(0x70, 0x05); // 0x05 - часы
-    outp(0x71, 0x00);
- 
-    outp(0x70, 0x03); // 0x03 - минуты
-    outp(0x71, 0x00);
- 
     outp(0x70, 0x01); // 0x01 - секунды
-    outp(0x71, 0x00);
+    outp(0x71, 0);
+
+    outp(0x70, 0x03); // 0x03 - минуты
+    outp(0x71, 0);
  
+    outp(0x70, 0x05); // 0x05 - часы
+    outp(0x71, 0);
+     
     outp(0x70, 0xB);
     outp(0x71, (inp(0x71) & 0xDF)); //Если 5й бит установлен в 0, то запрещаем прерывания будильника
  
@@ -230,7 +225,7 @@ int getValueBetweenAsBCD(int min, int max, const char* message)
 }
 void enterTime()
 {
-    date[5] = getValueBetweenAsBCD(0, 2100, "ENTER YEAR: ");
+    date[5] = getValueBetweenAsBCD(0, 99, "ENTER YEAR: ");
     date[4] = getValueBetweenAsBCD(1, 12, "ENTER MONTH: ");
     date[3] = getValueBetweenAsBCD(1, 365, "ENTER DAY: ");
     date[2] = getValueBetweenAsBCD(0, 23, "ENTER HOUR: ");
@@ -256,11 +251,17 @@ void interrupt newTime(...) // новый обработчик прерыван�
 
 void interrupt newAlarm(...) // новый обработчик прерываний будильника
 {
-    const char[8] ALARM = "ALARM!!!";
+    struct VIDEO
+    {
+        unsigned char symb;
+        unsigned char attr;
+    };
+    VIDEO  far* screen = (VIDEO far*)MK_FP(0xB800, 0);
+    const char ALARM[] = "ALARM!!!";
     for (int i = 0; i < 8; i++, screen++)
     {
         screen->symb = ALARM[i];
-        screen->attr = 0x5Eh;
+        screen->attr = 0x2E;
     }
     
     lastAlarm();
